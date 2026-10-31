@@ -32,7 +32,8 @@
           "cameraPermission": "Барааны зураг авахын тулд Ashi таны камерт хандах шаардлагатай.",
           "microphonePermission": false
         }
-      ]
+      ],
+      "expo-font"
     ],
     "experiments": {
       "typedRoutes": true
