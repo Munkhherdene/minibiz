@@ -54,7 +54,7 @@ export default function LoginScreen() {
       <Message type="error" text={error} />
       <SubmitButton title="Log in" loading={loading} onPress={handleLogin} />
       <Text style={styles.footer}>
-        Don't have an account?{' '}
+        Don&apos;t have an account?{' '}
         <Link href="/signup" replace style={styles.link}>
           Sign up
         </Link>
