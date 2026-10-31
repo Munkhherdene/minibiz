@@ -13,15 +13,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-export const colors = {
-  primary: '#2563EB',
-  text: '#111827',
-  muted: '#6B7280',
-  border: '#D1D5DB',
-  error: '#DC2626',
-  success: '#059669',
-  background: '#FFFFFF',
-};
+import { colors } from '@/constants/theme';
 
 export function AuthScreen({
   title,

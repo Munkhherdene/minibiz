@@ -1,8 +1,8 @@
 {
   "expo": {
-    "name": "minibiz",
-    "slug": "minibiz",
-    "scheme": "minibiz",
+    "name": "Ashi",
+    "slug": "ashi",
+    "scheme": "ashi",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
@@ -24,7 +24,15 @@
     },
     "plugins": [
       "expo-sqlite",
-      "expo-router"
+      "expo-router",
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "Барааны зураг сонгохын тулд Ashi таны зургийн санд хандах шаардлагатай.",
+          "cameraPermission": "Барааны зураг авахын тулд Ashi таны камерт хандах шаардлагатай.",
+          "microphonePermission": false
+        }
+      ]
     ],
     "experiments": {
       "typedRoutes": true

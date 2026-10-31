@@ -2,7 +2,8 @@ import { Link } from 'expo-router';
 import { useState } from 'react';
 import { StyleSheet, Text } from 'react-native';
 
-import { AuthScreen, Field, Message, SubmitButton, colors } from '@/components/auth-form';
+import { AuthScreen, Field, Message, SubmitButton } from '@/components/auth-form';
+import { colors } from '@/constants/theme';
 import { supabase } from '@/lib/supabase';
 
 export default function LoginScreen() {
