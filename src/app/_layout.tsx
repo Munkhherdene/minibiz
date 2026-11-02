@@ -2,8 +2,10 @@ import { QueryClientProvider } from '@tanstack/react-query';
 import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 
-import { LoadingState } from '@/components/ui';
+import { ErrorState, LoadingState } from '@/components/ui';
+import { useBusinesses } from '@/features/business/hooks';
 import { AuthProvider, useAuth } from '@/lib/auth';
+import { getErrorMessage } from '@/lib/errors';
 import { queryClient } from '@/lib/query-client';
 
 export default function RootLayout() {
@@ -18,19 +20,34 @@ export default function RootLayout() {
 }
 
 function RootNavigator() {
-  const { session, isLoading } = useAuth();
+  const { session, isLoading, isRecoveringPassword } = useAuth();
+  const businesses = useBusinesses();
 
-  if (isLoading) return <LoadingState />;
+  // During password recovery a session exists, but the user stays on the auth screens.
+  const signedIn = !!session && !isRecoveringPassword;
+  const hasBusiness = (businesses.data?.length ?? 0) > 0;
 
-  // The guards redirect automatically when the session changes,
-  // so screens never need to navigate after sign in or sign out.
+  if (isLoading || (signedIn && businesses.isPending)) return <LoadingState />;
+
+  if (signedIn && businesses.isError) {
+    return (
+      <ErrorState message={getErrorMessage(businesses.error)} onRetry={() => businesses.refetch()} />
+    );
+  }
+
+  // The guards redirect automatically when the session or business changes,
+  // so screens never navigate after sign in, sign out or onboarding.
   return (
     <Stack screenOptions={{ headerShown: false }}>
-      <Stack.Protected guard={!!session}>
+      <Stack.Protected guard={signedIn && hasBusiness}>
         <Stack.Screen name="(tabs)" />
       </Stack.Protected>
 
-      <Stack.Protected guard={!session}>
+      <Stack.Protected guard={signedIn && !hasBusiness}>
+        <Stack.Screen name="onboarding" />
+      </Stack.Protected>
+
+      <Stack.Protected guard={!signedIn}>
         <Stack.Screen name="(auth)" />
       </Stack.Protected>
     </Stack>

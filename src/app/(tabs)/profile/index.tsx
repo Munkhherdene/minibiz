@@ -1,43 +1,73 @@
+import { router } from 'expo-router';
 import { useState } from 'react';
+import { StyleSheet } from 'react-native';
 
-import { AppText, Button, Card, Divider, ListItem, Screen } from '@/components/ui';
+import { AppText, Button, Card, Divider, ListItem, Message, Screen } from '@/components/ui';
+import { signOut } from '@/features/auth/api';
+import { useActiveBusiness } from '@/features/business/hooks';
+import { useProfile } from '@/features/profile/hooks';
 import { formatDate } from '@/i18n/format';
 import { mn } from '@/i18n/mn';
 import { useAuth } from '@/lib/auth';
 import { getErrorMessage } from '@/lib/errors';
-import { supabase } from '@/lib/supabase';
 
 export default function ProfileScreen() {
   const { session } = useAuth();
   const user = session?.user;
+  const business = useActiveBusiness();
+  const profile = useProfile();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   async function handleLogout() {
     setLoading(true);
     setError(null);
-    const { error } = await supabase.auth.signOut();
-    // On success the root layout's guard switches to the login screen.
-    if (error) {
-      setError(getErrorMessage(error));
+    try {
+      await signOut();
+      // The root layout's guards switch to the login screen.
+    } catch (e) {
+      setError(getErrorMessage(e));
       setLoading(false);
     }
   }
 
   return (
     <Screen>
-      <Card style={{ paddingVertical: 4 }}>
-        <ListItem icon="mail" title={mn.profile.email} subtitle={user?.email} />
+      {business ? (
+        <>
+          <AppText variant="label" tone="muted">
+            {mn.profile.businessSection}
+          </AppText>
+          <Card style={styles.list}>
+            <ListItem
+              icon="store"
+              title={business.name}
+              subtitle={mn.business.types[business.business_type]}
+              onPress={() => router.push('/profile/business')}
+            />
+          </Card>
+        </>
+      ) : null}
+
+      <AppText variant="label" tone="muted">
+        {mn.profile.accountSection}
+      </AppText>
+      <Card style={styles.list}>
+        <ListItem
+          icon="profile"
+          title={profile.data?.full_name || mn.profile.account}
+          subtitle={user?.email}
+          onPress={() => router.push('/profile/account')}
+        />
         <Divider />
         <ListItem
           icon="calendar"
           title={mn.profile.memberSince}
-          subtitle={user?.created_at ? formatDate(user.created_at) : undefined}
+          value={user?.created_at ? formatDate(user.created_at) : undefined}
         />
       </Card>
 
-      {error ? <AppText tone="error">{error}</AppText> : null}
-
+      <Message tone="error" text={error} />
       <Button
         title={mn.profile.logout}
         icon="logout"
@@ -48,3 +78,7 @@ export default function ProfileScreen() {
     </Screen>
   );
 }
+
+const styles = StyleSheet.create({
+  list: { paddingVertical: 4 },
+});

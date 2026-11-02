@@ -12,7 +12,7 @@ export function roundMoney(amount: number): number {
   return rounded === 0 ? 0 : sign * rounded;
 }
 
-function groupThousands(digits: string): string {
+export function groupThousands(digits: string): string {
   return digits.replace(/\B(?=(\d{3})+(?!\d))/g, ',');
 }
 

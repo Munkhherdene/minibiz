@@ -1,95 +1,86 @@
-import { Link } from 'expo-router';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { router } from 'expo-router';
 import { useState } from 'react';
-import { StyleSheet, Text } from 'react-native';
+import { useForm } from 'react-hook-form';
 
-import { AuthScreen, Field, Message, SubmitButton } from '@/components/auth-form';
-import { colors } from '@/constants/theme';
-import { supabase } from '@/lib/supabase';
+import { AuthScreen } from '@/components/auth-screen';
+import { FormTextField } from '@/components/form/form-text-field';
+import { TextLink } from '@/components/text-link';
+import { Button, Message } from '@/components/ui';
+import { signUp } from '@/features/auth/api';
+import { signupSchema, type SignupInput } from '@/features/auth/schemas';
+import { mn } from '@/i18n/mn';
+import { getErrorMessage } from '@/lib/errors';
 
 export default function SignupScreen() {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
-  const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [notice, setNotice] = useState<string | null>(null);
+  const {
+    control,
+    handleSubmit,
+    formState: { isSubmitting },
+  } = useForm<SignupInput>({
+    resolver: zodResolver(signupSchema),
+    defaultValues: { fullName: '', email: '', password: '', confirmPassword: '' },
+  });
 
-  async function handleSignup() {
-    setNotice(null);
-    if (!email.trim() || !password) {
-      setError('Enter your email and a password.');
-      return;
-    }
-    if (password.length < 6) {
-      setError('Password must be at least 6 characters.');
-      return;
-    }
-    if (password !== confirmPassword) {
-      setError('Passwords do not match.');
-      return;
-    }
-
-    setLoading(true);
+  const onSubmit = handleSubmit(async ({ fullName, email, password }) => {
     setError(null);
-    const { data, error } = await supabase.auth.signUp({
-      email: email.trim(),
-      password,
-    });
-    if (error) {
-      setError(error.message);
-    } else if (!data.session) {
-      // "Confirm email" is on in Supabase: no session until the link is clicked.
-      setNotice('Check your email for a confirmation link, then log in.');
+    try {
+      await signUp(fullName, email, password);
+      // The user is now signed in; the guards continue to onboarding.
+    } catch (e) {
+      setError(getErrorMessage(e));
     }
-    // With a session, the root layout's guard switches to the home screen.
-    setLoading(false);
-  }
+  });
 
   return (
-    <AuthScreen title="Create account" subtitle="Sign up to get started">
-      <Field
-        label="Email"
-        value={email}
-        onChangeText={setEmail}
-        placeholder="you@example.com"
+    <AuthScreen title={mn.auth.signupTitle} subtitle={mn.auth.signupSubtitle}>
+      <FormTextField
+        control={control}
+        name="fullName"
+        label={mn.auth.fullName}
+        placeholder={mn.auth.fullNamePlaceholder}
+        autoComplete="name"
+        textContentType="name"
+        autoCapitalize="words"
+      />
+      <FormTextField
+        control={control}
+        name="email"
+        label={mn.auth.email}
+        placeholder={mn.auth.emailPlaceholder}
         autoCapitalize="none"
         autoComplete="email"
         keyboardType="email-address"
         textContentType="emailAddress"
       />
-      <Field
-        label="Password"
-        value={password}
-        onChangeText={setPassword}
-        placeholder="At least 6 characters"
+      <FormTextField
+        control={control}
+        name="password"
+        label={mn.auth.password}
+        placeholder={mn.auth.newPasswordPlaceholder}
         autoComplete="new-password"
         textContentType="newPassword"
-        secureTextEntry
+        secureToggle
       />
-      <Field
-        label="Confirm password"
-        value={confirmPassword}
-        onChangeText={setConfirmPassword}
-        placeholder="Repeat your password"
+      <FormTextField
+        control={control}
+        name="confirmPassword"
+        label={mn.auth.confirmPassword}
+        placeholder={mn.auth.confirmPasswordPlaceholder}
         autoComplete="new-password"
         textContentType="newPassword"
-        secureTextEntry
-        onSubmitEditing={handleSignup}
+        secureToggle
+        returnKeyType="go"
+        onSubmitEditing={() => onSubmit()}
       />
-      <Message type="error" text={error} />
-      <Message type="success" text={notice} />
-      <SubmitButton title="Sign up" loading={loading} onPress={handleSignup} />
-      <Text style={styles.footer}>
-        Already have an account?{' '}
-        <Link href="/login" replace style={styles.link}>
-          Log in
-        </Link>
-      </Text>
+      <Message tone="error" text={error} />
+      <Button title={mn.auth.signup} loading={isSubmitting} onPress={onSubmit} />
+      <TextLink
+        prompt={mn.auth.haveAccount}
+        label={mn.auth.login}
+        onPress={() => router.replace('/login')}
+      />
     </AuthScreen>
   );
 }
-
-const styles = StyleSheet.create({
-  footer: { textAlign: 'center', color: colors.muted, marginTop: 8 },
-  link: { color: colors.primary, fontWeight: '600' },
-});
